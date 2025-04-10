@@ -1,35 +1,69 @@
 import { Link } from "react-router-dom"
 import DashboardLayout from "../components/DashboardLayout"
 import { Globe, Users, BarChart, Shield, Clock, ExternalLink, Edit, Trash2, PlusCircle, Upload } from "lucide-react"
+import { useEffect, useState } from "react";
+import axios from "axios";
+const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 export default function DashboardPage() {
-  // Mock data for websites
-  const websites = [
-    {
-      id: 1,
-      name: "My Portfolio",
-      domain: "portfolio.staticshield.com",
-      status: "online",
-      visitors: 1243,
-      lastDeployed: "2 hours ago",
-    },
-    {
-      id: 2,
-      name: "Company Blog",
-      domain: "blog.mycompany.com",
-      status: "online",
-      visitors: 5621,
-      lastDeployed: "1 day ago",
-    },
-    {
-      id: 3,
-      name: "Product Landing Page",
-      domain: "product.staticshield.com",
-      status: "online",
-      visitors: 8942,
-      lastDeployed: "3 days ago",
-    },
-  ]
+  const [projects, setProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        setIsLoading(true);
+        const authToken = localStorage.getItem("token");
+        const response = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+        const projectList = response.data.projectList;
+
+        const updatedProjects = projectList.map(project => {
+          const lastDeployed = calculateTimeDifference(project.createdAt);
+          const status = checkWebsiteStatus(project.projectUrl);
+          return {
+            id: project._id,
+            name: project.projectName,
+            domain: new URL(project.projectUrl).hostname,
+            status: status,
+            visitors: Math.floor(Math.random() * 2000),
+            lastDeployed,
+            url: project.projectUrl
+          };
+        });
+
+        setProjects(updatedProjects);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchProjects();
+  }, []);
+
+  function calculateTimeDifference(createdAt) {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    const diffInMs = now - createdDate;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    return diffInHours > 24
+      ? `${Math.floor(diffInHours / 24)} days ago`
+      : `${diffInHours} hours ago`;
+  }
+
+  async function checkWebsiteStatus(url) {
+    try {
+      const response = await axios.get(url);
+      return response.status === 200 ? "online" : "offline";
+    } catch (error) {
+      return "offline";
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -45,7 +79,7 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[#B0B0B0] text-sm">Total Websites</p>
-                <h3 className="text-2xl font-bold text-white mt-1">3</h3>
+                <h3 className="text-2xl font-bold text-white mt-1">{projects.length}</h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
                 <Globe className="h-5 w-5 text-[#4ADE80]" />
@@ -110,67 +144,80 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-[#1A1A1A] rounded-xl border border-[#2A2A2A] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#2A2A2A]">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
-                    Domain
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
-                    Visitors
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
-                    Last Deployed
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {websites.map((website) => (
-                  <tr key={website.id} className="border-b border-[#2A2A2A] last:border-b-0">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{website.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">{website.domain}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-[#4ADE80]/10 text-[#4ADE80]">
-                        {website.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">
-                      {website.visitors.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-[#B0B0B0]" />
-                        <span>{website.lastDeployed}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0] text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Visit">
-                          <ExternalLink className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Edit">
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+          {isLoading ? (
+            <div className="p-8 text-center text-[#E0E0E0]">Loading your websites...</div>
+          ) : projects.length === 0 ? (
+            <div className="p-8 text-center text-[#E0E0E0]">
+              <p>You don't have any websites yet.</p>
+              <Link to="/create" className="text-[#4ADE80] mt-2 inline-block">
+                Create your first website
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#2A2A2A]">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
+                      Domain
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
+                      Visitors
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
+                      Last Deployed
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-[#B0B0B0] uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {projects.map((website) => (
+                    <tr key={website.id} className="border-b border-[#2A2A2A] last:border-b-0">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{website.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">{website.domain}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          website.status === "active" ? "bg-[#4ADE80]/10 text-[#4ADE80]" : "bg-[#F87171]/10 text-[#F87171]"
+                        }`}>
+                          {website.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">
+                        {website.visitors.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-[#B0B0B0]" />
+                          <span>{website.lastDeployed}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0] text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <a href={website.url} target="_blank" rel="noopener noreferrer" className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Visit">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Edit">
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Delete">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Recent Activity */}
@@ -220,4 +267,3 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 }
-
