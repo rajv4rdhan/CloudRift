@@ -1,0 +1,14 @@
+// tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "strict": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "moduleResolution": "node" // (optional but can help)
+  },
+  "include": ["./src/**/*", "./src/types/**/*"]
+}
