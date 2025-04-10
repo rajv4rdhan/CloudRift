@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Request, Response } from "express";
-import { User } from "../models/user.model";
-import {generateRandomCode} from "../utils/random";
-import { ProjectCollection } from "../models/project.model";
+import { User } from "../../models/user.model";
+import {generateRandomCode} from "../../utils/random";
+import { ProjectCollection } from "../../models/project.model";
 dotenv.config();
 
 const s3 = new S3Client({
