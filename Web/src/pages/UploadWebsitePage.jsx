@@ -3,12 +3,17 @@
 import { useState } from "react"
 import DashboardLayout from "../components/DashboardLayout"
 import { Upload, FileText, X, Check, AlertCircle } from "lucide-react"
+import toast from "react-hot-toast"
 
 export default function UploadWebsitePage() {
   const [dragActive, setDragActive] = useState(false)
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
   const [uploadComplete, setUploadComplete] = useState(false)
+  const [websiteNameError, setWebsiteNameError] = useState("")
+  const [websiteName, setWebsiteName] = useState("")
+  const [domain, setDomain] = useState("")
+  const VITE_API_URL = import.meta.env.VITE_API_URL
 
   const handleDrag = (e) => {
     e.preventDefault()
@@ -47,24 +52,72 @@ export default function UploadWebsitePage() {
     setFiles(newFiles)
   }
 
-  const handleSubmit = (e) => {
+  const handleWebsiteNameChange = (e) => {
+    setWebsiteName(e.target.value)
+    // Clear error when user starts typing
+    if (websiteNameError) {
+      setWebsiteNameError("")
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Validate website name
+    if (!websiteName.trim()) {
+      setWebsiteNameError("Website name is required")
+      return
+    }
 
     if (files.length === 0) return
 
     setUploading(true)
 
-    // Simulate upload
-    setTimeout(() => {
-      setUploading(false)
+    try {
+      // Create FormData object
+      const formData = new FormData()
+      
+      // Append website name and domain
+      formData.append("projectName", websiteName)
+      if (domain) {
+        formData.append("domain", domain)
+      }
+      
+      // Append files
+      files.forEach(file => {
+        formData.append("file", file)
+      })
+      const token = localStorage.getItem("token");
+      // Make API request
+      const response = await fetch(`${VITE_API_URL}/api/upload/uploadFile`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Error uploading files')
+      }
+      
       setUploadComplete(true)
-
+      
       // Reset after 3 seconds
       setTimeout(() => {
         setFiles([])
         setUploadComplete(false)
+        setWebsiteName("")
+        setDomain("")
       }, 3000)
-    }, 2000)
+    } catch (error) {
+      // Show error using toast
+      toast.error(error.message || "Failed to upload files")
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -84,10 +137,17 @@ export default function UploadWebsitePage() {
               <input
                 type="text"
                 id="website-name"
-                className="w-full px-3 py-2 bg-[#121212] border border-[#2A2A2A] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#4ADE80] focus:border-transparent"
+                className={`w-full px-3 py-2 bg-[#121212] border ${
+                  websiteNameError ? "border-red-500" : "border-[#2A2A2A]"
+                } rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#4ADE80] focus:border-transparent`}
                 placeholder="My Awesome Website"
+                value={websiteName}
+                onChange={handleWebsiteNameChange}
                 required
               />
+              {websiteNameError && (
+                <p className="mt-1 text-xs text-red-500">{websiteNameError}</p>
+              )}
             </div>
 
             <div className="mb-6">
@@ -100,6 +160,8 @@ export default function UploadWebsitePage() {
                   id="domain"
                   className="w-full px-3 py-2 bg-[#121212] border border-[#2A2A2A] rounded-l-md text-white focus:outline-none focus:ring-2 focus:ring-[#4ADE80] focus:border-transparent"
                   placeholder="mywebsite"
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
                 />
                 <span className="inline-flex items-center px-3 py-2 rounded-r-md border border-l-0 border-[#2A2A2A] bg-[#121212] text-[#707070]">
                   .staticshield.com
@@ -190,6 +252,12 @@ export default function UploadWebsitePage() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-md border border-[#2A2A2A] text-[#E0E0E0] hover:bg-[#2A2A2A]"
+                onClick={() => {
+                  setFiles([])
+                  setWebsiteName("")
+                  setDomain("")
+                  setWebsiteNameError("")
+                }}
               >
                 Cancel
               </button>
@@ -266,4 +334,3 @@ export default function UploadWebsitePage() {
     </DashboardLayout>
   )
 }
-

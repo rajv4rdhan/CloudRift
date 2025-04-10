@@ -5,7 +5,7 @@ import { generateToken } from "../utils/jwt";
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, password, email, role, company } = req.body;
+    const { username, password, email, role, company, name } = req.body;
 
     const existing = await User.findOne({ username });
     if (existing) {
@@ -14,7 +14,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     }
 
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, password: hash,email, role, company  });
+    const user = await User.create({ username, password: hash,email, role, company, name  });
 
     res.status(201).json({ token: generateToken(user._id.toString()) });
   } catch (error: unknown) {
@@ -47,6 +47,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const checkUsername = async (req: Request, res: Response): Promise<void> => {
+  try { const { username } = req.query;
+    if (!username) {
+      res.status(200).json({ exists: false });
+      return;
+    }
+    if(username){
+      res.status(200).json({ exists: true });
+      return;
+    }
+  }
+  catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: "Server error", error: errorMessage });
+  }
+
+}
+
 
 export const getDetail = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -64,7 +82,7 @@ export const getDetail = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    res.status(200).json({ username: user.username });
+    res.status(200).json({ username: user.username, valid: true });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     res.status(500).json({ message: "Server error", error: errorMessage });

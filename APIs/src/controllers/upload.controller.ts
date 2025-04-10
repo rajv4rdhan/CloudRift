@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Request, Response } from "express";
 import { User } from "../models/user.model";
-
+import {generateRandomCode} from "../utils/random";
+import { ProjectCollection } from "../models/project.model";
 dotenv.config();
 
 const s3 = new S3Client({
@@ -33,6 +34,15 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
 
         const userId = (req as any).user.id;
         const user = await User.findById(userId);
+        const { projectName, domain, projectDescription } = req.body;
+
+        if (!projectName) {
+            res.status(400).json({ error: "Project name is required" });
+            return;
+        }
+        if (!domain) {
+            req.body.domain = generateRandomCode(5);
+        }
 
         if (!user) {
             res.status(401).json({ error: "Unauthorized" });
@@ -51,9 +61,9 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
             res.status(400).json({ error: "File is required" });
             return;
         }
-        
+
         const uniqueFilename = `${file.originalname}`;
-        const s3Key = `${username}/${uniqueFilename}`;
+        const s3Key = `${req.body.domain}/${uniqueFilename}`;
 
         const params = {
             Bucket: bucketName,
@@ -66,10 +76,28 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
         console.log(`File uploaded successfully to ${s3Key}`);
 
         const fileUrl = `${cloudFrontUrl}/${s3Key}`;
+
+        // Save project data to the database
+        const projectData = {
+            projectName,
+            projectDescription,
+            projectUrl: fileUrl,
+            projectStatus: "active",
+        };
+
+        let projectCollection = await ProjectCollection.findOne({ username });
+        if (!projectCollection) {
+            projectCollection = new ProjectCollection({ username, projects: [projectData] });
+        } else {
+            projectCollection.projects.push(projectData);
+        }
+
+        await projectCollection.save();
+
         res.json({ message: "File uploaded successfully", url: fileUrl });
     } catch (error) {
         console.error("AWS S3 upload error:", error);
         res.status(500).json({ error: "File upload failed" });
     }
-}
+};
 

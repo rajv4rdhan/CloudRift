@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Shield, Eye, EyeOff, CheckCircle, AlertCircle, ArrowRight, Loader2 } from "lucide-react"
+const VITE_API_URL = import.meta.env.VITE_API_URL
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -119,13 +120,31 @@ export default function SignupPage() {
     setError("")
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const response = await fetch(`${VITE_API_URL}/api/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.firstName,
+          name: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          company: formData.company,
+          role: formData.role,
+        }),
+      })
+
+      if (!response.ok) {
+        const { message } = await response.json()
+        throw new Error(message || "An error occurred during signup.")
+      }
 
       // Redirect to dashboard on success
       navigate("/dashboard")
+      
     } catch (err) {
-      setError("An error occurred during signup. Please try again.")
+      setError(err.message || "An error occurred during signup. Please try again.")
     } finally {
       setLoading(false)
     }
