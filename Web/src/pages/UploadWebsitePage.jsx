@@ -109,7 +109,7 @@ export default function UploadWebsitePage() {
 
       const token = localStorage.getItem("token");
       // Make API request
-      const response = await fetch(`${VITE_API_URL}/api/upload/uploadFile`, {
+      const response = await fetch(`${VITE_API_URL}/api/project/uploadFile`, {
         method: "POST",
         body: formData,
         headers: {

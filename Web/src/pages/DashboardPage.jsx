@@ -58,9 +58,11 @@ export default function DashboardPage() {
 
   async function checkWebsiteStatus(url) {
     try {
-      const response = await axios.get(url);
+      console.log("Checking status for:", url);
+      const response = await axios.get(url, { timeout: 5000 });
       return response.status === 200 ? "online" : "offline";
     } catch (error) {
+      console.error("Error checking website status:", error.message);
       return "offline";
     }
   }
