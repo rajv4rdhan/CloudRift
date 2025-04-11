@@ -1,69 +1,147 @@
+"use client"
+
 import { Link } from "react-router-dom"
 import DashboardLayout from "../components/DashboardLayout"
-import { Globe, Users, BarChart, Shield, Clock, ExternalLink, Edit, Trash2, PlusCircle, Upload } from "lucide-react"
-import { useEffect, useState } from "react";
-import axios from "axios";
-const VITE_API_URL = import.meta.env.VITE_API_URL;
+import {
+  Globe,
+  Users,
+  BarChart,
+  Shield,
+  Clock,
+  ExternalLink,
+  Edit,
+  Trash2,
+  PlusCircle,
+  Upload,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import axios from "axios"
+const VITE_API_URL = import.meta.env.VITE_API_URL
 
 export default function DashboardPage() {
-  const [projects, setProjects] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [projects, setProjects] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState(null)
+  const [refreshSuccess, setRefreshSuccess] = useState(false)
 
   useEffect(() => {
     async function fetchProjects() {
       try {
-        setIsLoading(true);
-        const authToken = localStorage.getItem("token");
+        setIsLoading(true)
+        const authToken = localStorage.getItem("token")
         const response = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        });
-        const projectList = response.data.projectList;
+        })
+        const projectList = response.data.projectList
 
-        const updatedProjects = projectList.map(project => {
-          const lastDeployed = calculateTimeDifference(project.createdAt);
-          const status = checkWebsiteStatus(project.projectUrl);
+        const updatedProjects = projectList.map((project) => {
+          const lastDeployed = calculateTimeDifference(project.createdAt)
+          const status = checkWebsiteStatus(project.projectUrl)
           return {
             id: project._id,
             name: project.projectName,
             domain: new URL(project.projectUrl).hostname,
             status: status,
-            visitors: Math.floor(Math.random() * 2000),
+            visitors: project.logs.visitors,
             lastDeployed,
-            url: project.projectUrl
-          };
-        });
+            url: project.projectUrl,
+          }
+        })
 
-        setProjects(updatedProjects);
+        setProjects(updatedProjects)
       } catch (error) {
-        console.error("Error fetching projects:", error);
+        console.error("Error fetching projects:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
 
-    fetchProjects();
-  }, []);
+    fetchProjects()
+  }, [])
 
   function calculateTimeDifference(createdAt) {
-    const createdDate = new Date(createdAt);
-    const now = new Date();
-    const diffInMs = now - createdDate;
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    return diffInHours > 24
-      ? `${Math.floor(diffInHours / 24)} days ago`
-      : `${diffInHours} hours ago`;
+    const createdDate = new Date(createdAt)
+    const now = new Date()
+    const diffInMs = now - createdDate
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    return diffInHours > 24 ? `${Math.floor(diffInHours / 24)} days ago` : `${diffInHours} hours ago`
   }
 
   async function checkWebsiteStatus(url) {
     try {
-      console.log("Checking status for:", url);
-      const response = await axios.get(url, { timeout: 5000 });
-      return response.status === 200 ? "online" : "offline";
+      console.log("Checking status for:", url)
+      const response = await axios.get(url, { timeout: 5000 })
+      return response.status === 200 ? "online" : "offline"
     } catch (error) {
-      console.error("Error checking website status:", error.message);
-      return "offline";
+      console.error("Error checking website status:", error.message)
+      return "offline"
+    }
+  }
+
+  async function handleRefreshStats() {
+    try {
+      setRefreshing(true)
+      setRefreshError(null)
+      setRefreshSuccess(false)
+
+      const authToken = localStorage.getItem("token")
+
+      // Call the update-stats API
+      const updateResponse = await axios.get(`${VITE_API_URL}/api/project/updateStats`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      })
+
+      if (updateResponse.status === 200) {
+        setRefreshSuccess(true)
+
+        // If successful, refresh the projects data
+        const projectResponse = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+
+        const projectList = projectResponse.data.projectList
+
+        const updatedProjects = projectList.map((project) => {
+          const lastDeployed = calculateTimeDifference(project.createdAt)
+          const status = checkWebsiteStatus(project.projectUrl)
+          return {
+            id: project._id,
+            name: project.projectName,
+            domain: new URL(project.projectUrl).hostname,
+            status: status,
+            visitors: project.logs.visitors,
+            lastDeployed,
+            url: project.projectUrl,
+          }
+        })
+
+        setProjects(updatedProjects)
+
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          setRefreshSuccess(false)
+        }, 3000)
+      }
+    } catch (error) {
+      console.error("Error refreshing stats:", error)
+      setRefreshError(error.message || "Failed to refresh stats. Please try again.")
+
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => {
+        setRefreshError(null)
+      }, 5000)
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -128,7 +206,18 @@ export default function DashboardPage() {
 
         {/* Websites */}
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Your Websites</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-white">Your Websites</h2>
+            <button
+              onClick={handleRefreshStats}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#1A1A1A] text-[#E0E0E0] hover:bg-[#2A2A2A] transition-colors border border-[#2A2A2A] disabled:opacity-60 disabled:cursor-not-allowed"
+              title="Refresh website stats"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              <span className="text-sm">{refreshing ? "Refreshing..." : "Refresh Stats"}</span>
+            </button>
+          </div>
           <div className="flex gap-2">
             <Link to="/upload">
               <button className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#1A1A1A] text-[#E0E0E0] hover:bg-[#2A2A2A]">
@@ -144,6 +233,20 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {refreshSuccess && (
+          <div className="mb-4 p-3 bg-[#4ADE80]/10 border border-[#4ADE80]/30 rounded-md flex items-center gap-2 animate-fadeIn">
+            <CheckCircle className="h-5 w-5 text-[#4ADE80]" />
+            <p className="text-sm text-[#4ADE80]">Stats refreshed successfully!</p>
+          </div>
+        )}
+
+        {refreshError && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-md flex items-center gap-2 animate-fadeIn">
+            <XCircle className="h-5 w-5 text-red-500" />
+            <p className="text-sm text-red-500">{refreshError}</p>
+          </div>
+        )}
 
         <div className="bg-[#1A1A1A] rounded-xl border border-[#2A2A2A] overflow-hidden">
           {isLoading ? (
@@ -186,9 +289,13 @@ export default function DashboardPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{website.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0]">{website.domain}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          website.status === "active" ? "bg-[#4ADE80]/10 text-[#4ADE80]" : "bg-[#F87171]/10 text-[#F87171]"
-                        }`}>
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            website.status === "active"
+                              ? "bg-[#4ADE80]/10 text-[#4ADE80]"
+                              : "bg-[#F87171]/10 text-[#F87171]"
+                          }`}
+                        >
                           {website.status}
                         </span>
                       </td>
@@ -203,7 +310,13 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[#E0E0E0] text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <a href={website.url} target="_blank" rel="noopener noreferrer" className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Visit">
+                          <a
+                            href={website.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]"
+                            title="Visit"
+                          >
                             <ExternalLink className="h-4 w-4" />
                           </a>
                           <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Edit">
@@ -269,3 +382,13 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 }
+;<style jsx>{`
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+`}</style>

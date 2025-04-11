@@ -64,7 +64,7 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
 
         const uniqueFilename = `${file.originalname}`;
         const s3Key = `${req.body.domain}/${uniqueFilename}`;
-
+        
         const params = {
             Bucket: bucketName,
             Key: s3Key,
@@ -78,10 +78,19 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
         const fileUrl = `${cloudFrontUrl}/${s3Key}`;
 
         // Save project data to the database
+        const logs = {
+            visitors: 0,
+            bandwidth_mb: 0,
+            impressions: 0,
+        };
+        const logs_processed = new Date();
         const projectData = {
             projectName,
             projectDescription,
+            domain: req.body.domain,
             projectUrl: fileUrl,
+            logs,
+            logs_processed,
             projectStatus: "active",
         };
 
