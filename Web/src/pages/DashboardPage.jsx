@@ -16,6 +16,7 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
+  Eye,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import axios from "axios"
@@ -49,6 +50,8 @@ export default function DashboardPage() {
             domain: new URL(project.projectUrl).hostname,
             status: status,
             visitors: project.logs.visitors,
+            impressions: project.logs.impressions,
+            bandwidth_mb: project.logs.bandwidth_mb,
             lastDeployed,
             url: project.projectUrl,
           }
@@ -120,6 +123,8 @@ export default function DashboardPage() {
             domain: new URL(project.projectUrl).hostname,
             status: status,
             visitors: project.logs.visitors,
+            impressions: project.logs.impressions,
+            bandwidth_mb: project.logs.bandwidth_mb,
             lastDeployed,
             url: project.projectUrl,
           }
@@ -171,7 +176,9 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[#B0B0B0] text-sm">Total Visitors</p>
-                <h3 className="text-2xl font-bold text-white mt-1">15.8K</h3>
+                <h3 className="text-2xl font-bold text-white mt-1">
+                {projects.reduce((total, project) => total + project.visitors, 0).toLocaleString()}
+                </h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
                 <Users className="h-5 w-5 text-[#4ADE80]" />
@@ -183,7 +190,9 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[#B0B0B0] text-sm">Bandwidth Used</p>
-                <h3 className="text-2xl font-bold text-white mt-1">128 GB</h3>
+                <h3 className="text-2xl font-bold text-white mt-1">
+                {projects.reduce((total, project) => total + project.bandwidth_mb, 0).toLocaleString()} MB
+                </h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
                 <BarChart className="h-5 w-5 text-[#4ADE80]" />
@@ -194,11 +203,13 @@ export default function DashboardPage() {
           <div className="bg-[#1A1A1A] p-6 rounded-xl border border-[#2A2A2A]">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[#B0B0B0] text-sm">Threats Blocked</p>
-                <h3 className="text-2xl font-bold text-white mt-1">2.4K</h3>
+                <p className="text-[#B0B0B0] text-sm">Total Impressions</p>
+                <h3 className="text-2xl font-bold text-white mt-1">
+                  {projects.reduce((total, project) => total + project.impressions, 0).toLocaleString()}
+                </h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
-                <Shield className="h-5 w-5 text-[#4ADE80]" />
+                <Eye className="h-5 w-5 text-[#4ADE80]" />
               </div>
             </div>
           </div>

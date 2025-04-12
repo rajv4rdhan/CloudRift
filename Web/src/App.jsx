@@ -7,6 +7,7 @@ import UploadWebsitePage from "./pages/UploadWebsitePage"
 import CreateWebsitePage from "./pages/CreateWebsitePage"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
+import AIGeneratePage from "./pages/AIGeneratePage"
 import { ThemeProvider } from "./components/theme-provider"
 import ProtectedRoute from "./components/ProtectedRoute"
 
@@ -43,6 +44,14 @@ function App() {
             }
           />
           <Route
+            path="/ai-generate"
+            element={
+              <ProtectedRoute>
+                <AIGeneratePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -65,4 +74,3 @@ function App() {
 }
 
 export default App
-

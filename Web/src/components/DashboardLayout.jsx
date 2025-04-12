@@ -2,7 +2,19 @@
 
 import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Shield, LayoutDashboard, Upload, PlusCircle, Settings, Bell, User, LogOut, Menu, X } from "lucide-react"
+import {
+  Shield,
+  LayoutDashboard,
+  Upload,
+  PlusCircle,
+  Settings,
+  Bell,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Sparkles,
+} from "lucide-react"
 
 export default function DashboardLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -87,6 +99,21 @@ export default function DashboardLayout({ children }) {
               </Link>
 
               <Link
+                to="/ai-generate"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+                  isActive("/ai-generate") ? "bg-[#4ADE80]/10 text-[#4ADE80]" : "text-[#E0E0E0] hover:bg-[#1A1A1A]"
+                }`}
+              >
+                <Sparkles className="h-5 w-5" />
+                <div className="flex items-center">
+                  <span>AI Generate</span>
+                  <span className="ml-2 px-1.5 py-0.5 bg-[#4ADE80]/10 text-[#4ADE80] text-xs font-medium rounded-full">
+                    BETA
+                  </span>
+                </div>
+              </Link>
+
+              <Link
                 to="/settings"
                 className={`flex items-center gap-3 px-3 py-2 rounded-md ${
                   isActive("/settings") ? "bg-[#4ADE80]/10 text-[#4ADE80]" : "text-[#E0E0E0] hover:bg-[#1A1A1A]"
@@ -158,6 +185,22 @@ export default function DashboardLayout({ children }) {
                 </Link>
 
                 <Link
+                  to="/ai-generate"
+                  className={`flex items-center gap-3 px-3 py-3 rounded-md ${
+                    isActive("/ai-generate") ? "bg-[#4ADE80]/10 text-[#4ADE80]" : "text-[#E0E0E0] hover:bg-[#1A1A1A]"
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Sparkles className="h-5 w-5" />
+                  <div className="flex items-center">
+                    <span>AI Generate</span>
+                    <span className="ml-2 px-1.5 py-0.5 bg-[#4ADE80]/10 text-[#4ADE80] text-xs font-medium rounded-full">
+                      BETA
+                    </span>
+                  </div>
+                </Link>
+
+                <Link
                   to="/settings"
                   className={`flex items-center gap-3 px-3 py-3 rounded-md ${
                     isActive("/settings") ? "bg-[#4ADE80]/10 text-[#4ADE80]" : "text-[#E0E0E0] hover:bg-[#1A1A1A]"
@@ -200,4 +243,3 @@ export default function DashboardLayout({ children }) {
     </div>
   )
 }
-
