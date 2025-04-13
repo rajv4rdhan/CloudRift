@@ -277,7 +277,7 @@ export default function UploadWebsitePage() {
                 onChange={(e) => setDomain(e.target.value)}
               />
               <span className="inline-flex items-center px-3 py-2 rounded-r-md border border-l-0 border-[#2A2A2A] bg-[#121212] text-[#707070]">
-                .staticshield.com
+                .tuneloom.cfd
               </span>
             </div>
             <p className="mt-1 text-xs text-[#707070]">

@@ -17,7 +17,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+app.get("/api/test", (req, res) => {
+  res.send("Working");
+});
 app.use("/api/auth", authRoutes);
 app.use("/api/demo", demoRoutes);
 app.use("/api/project", uploadS3);
