@@ -98,6 +98,7 @@ export default function UploadWebsitePage() {
 
       // Append website name and domain
       formData.append("projectName", websiteName);
+      formData.append("tld", "tuneloom.cfd");
       if (domain) {
         formData.append("domain", domain);
       }

@@ -34,7 +34,7 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
 
         const userId = (req as any).user.id;
         const user = await User.findById(userId);
-        const { projectName, domain, projectDescription } = req.body;
+        const { projectName, domain, projectDescription, tld } = req.body;
 
         if (!projectName) {
             res.status(400).json({ error: "Project name is required" });
@@ -92,6 +92,8 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
             logs,
             logs_processed,
             projectStatus: "active",
+            tld
+            
         };
 
         let projectCollection = await ProjectCollection.findOne({ username });
