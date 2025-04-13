@@ -47,7 +47,7 @@ export default function DashboardPage() {
           return {
             id: project._id,
             name: project.projectName,
-            domain: new URL(project.projectUrl).hostname,
+            domain: `${project.domain}.${project.tld}`,
             status: status,
             visitors: project.logs.visitors,
             impressions: project.logs.impressions,
@@ -78,9 +78,8 @@ export default function DashboardPage() {
 
   async function checkWebsiteStatus(url) {
     try {
-      console.log("Checking status for:", url)
-      const response = await axios.get(url, { timeout: 5000 })
-      return response.status === 200 ? "online" : "offline"
+      
+      return "online"
     } catch (error) {
       console.error("Error checking website status:", error.message)
       return "offline"

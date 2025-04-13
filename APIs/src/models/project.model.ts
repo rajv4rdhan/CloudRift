@@ -1,3 +1,4 @@
+import { CloudTrailData } from "aws-sdk";
 import { log } from "console";
 import mongoose from "mongoose";
 
@@ -21,6 +22,7 @@ const project = new mongoose.Schema({
     projectStatus: { type: String, required: true },
     createdAt: { type: Date, default: Date.now, required: true },
     logs: { type: logs, required: true },
+    tld: { type: String, required: true },
 });
 
 const projectCollectionSchema = new mongoose.Schema({
