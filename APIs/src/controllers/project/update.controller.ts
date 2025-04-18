@@ -2,7 +2,17 @@ import { ProjectCollection } from "../../models/project.model";
 import { Request, Response } from "express";
 import { User } from "../../models/user.model";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-
+import dotenv from "dotenv";
+dotenv.config();
+import { S3Client, DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+export const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+    },
+});
+const bucketName = process.env.S3_BUCKET_NAME || "";
 const lambdaClient = new LambdaClient({
     region: "us-east-1",
     credentials: {
@@ -77,3 +87,91 @@ export const updateProjectStats = async (req: Request, res: Response) : Promise<
         res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export const deleteProject = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req as any).user.id;
+      
+      const [user, projectCollection] = await Promise.all([
+        User.findById(userId),
+        User.findById(userId).then(u => 
+          u ? ProjectCollection.findOne({ username: u.username }) : null
+        )
+      ]);
+  
+      if (!user) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      
+      if (!projectCollection) {
+        res.status(404).json({ error: "Project collection not found" });
+        return;
+      }
+  
+      const { domain } = req.body;
+      if (!domain) {
+        res.status(400).json({ error: "Domain is required" });
+        return;
+      }
+  
+      const projectIndex = projectCollection.projects.findIndex(
+        (project) => project.domain === domain
+      );
+      
+      if (projectIndex === -1) {
+        res.status(404).json({ error: "Project not found" });
+        return;
+      }
+
+      const folderKey = `${domain}/`;
+      const [s3Result] = await Promise.all([
+        deleteS3Folder(folderKey),
+        updateProjectCollection(projectCollection, projectIndex)
+      ]);
+  
+      if (s3Result.error) {
+        res.status(500).json({ error: s3Result.error });
+        return;
+      }
+  
+      res.status(200).json({ message: "Project deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };
+  
+
+  async function deleteS3Folder(folderKey: string) {
+    try {
+      const listParams = {
+        Bucket: bucketName,
+        Prefix: folderKey,
+      };
+  
+      const listedObjects = await s3.send(new ListObjectsV2Command(listParams));
+  
+      if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+        const deleteParams = {
+          Bucket: bucketName,
+          Delete: {
+            Objects: listedObjects.Contents.map((item) => ({ Key: item.Key })),
+          },
+        };
+  
+        await s3.send(new DeleteObjectsCommand(deleteParams));
+        console.log(`Folder ${folderKey} deleted successfully from S3.`);
+      }
+      return { success: true };
+    } catch (error) {
+      console.error(`Error deleting folder ${folderKey} from S3:`, error);
+      return { error: "Failed to delete folder from S3" };
+    }
+  }
+  
+
+  async function updateProjectCollection(projectCollection: any, projectIndex: number) {
+    projectCollection.projects.splice(projectIndex, 1);
+    return projectCollection.save();
+  }

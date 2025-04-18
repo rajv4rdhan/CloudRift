@@ -76,7 +76,7 @@ export default function LoginPage() {
                     htmlFor="email"
                     className="block text-sm font-medium text-[#E0E0E0]"
                   >
-                    Email address
+                    Username
                   </label>
                   <div className="mt-2">
                     <input

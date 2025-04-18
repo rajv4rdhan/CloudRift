@@ -14,7 +14,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-[#4ADE80]" />
-            <span className="font-bold text-xl text-white">StaticShield</span>
+            <span className="font-bold text-xl text-white">CloudRift</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -222,7 +222,7 @@ export default function LandingPage() {
                           strokeLinejoin="round"
                         />
                       </svg>
-                      staticshield — zsh — 100×20
+                      CloudRift — zsh — 100×20
                     </div>
                   </div>
                 </div>
@@ -235,7 +235,7 @@ export default function LandingPage() {
                       <span className="text-[#C678DD]">~</span>
                       <span className="text-[#E0E0E0] mr-2">$</span>
                       <div className="typing-animation">
-                        <span className="text-[#E0E0E0]">npm create staticshield-app my-website</span>
+                        <span className="text-[#E0E0E0]">npm create CloudRift-app my-website</span>
                       </div>
                     </div>
 
@@ -264,7 +264,7 @@ export default function LandingPage() {
                         <span>Setting up project...</span>
                       </div>
                       <p className="text-[#98C379]">
-                        ✓ <span className="text-[#707070]">StaticShield SDK</span> installed
+                        ✓ <span className="text-[#707070]">CloudRift SDK</span> installed
                       </p>
                     </div>
 
@@ -280,7 +280,7 @@ export default function LandingPage() {
                     <div className="text-[#707070] pl-4 space-y-1">
                       <p className="text-[#98C379]">
                         ✓{" "}
-                        <span className="text-white font-medium">Deployed to https://my-website.staticshield.com</span>
+                        <span className="text-white font-medium">Deployed to https://my-website.CloudRift.com</span>
                       </p>
                       <p className="text-[#98C379]">
                         ✓ <span className="text-[#707070]">Global CDN propagation</span> complete
@@ -709,7 +709,7 @@ export default function LandingPage() {
                 Ready to <span className="text-[#4ADE80]">secure</span> your static websites?
               </h2>
               <p className="text-[#B0B0B0] mb-8 text-lg">
-                Join thousands of developers and companies who trust StaticShield for their hosting needs.
+                Join thousands of developers and companies who trust CloudRift for their hosting needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/signup">
@@ -733,7 +733,7 @@ export default function LandingPage() {
             <div>
               <Link to="/" className="flex items-center gap-2 mb-4">
                 <Shield className="h-6 w-6 text-[#4ADE80]" />
-                <span className="font-bold text-xl text-white">StaticShield</span>
+                <span className="font-bold text-xl text-white">CloudRift</span>
               </Link>
               <p className="text-[#B0B0B0] mb-4">
                 Secure, fast, and reliable static website hosting with advanced protection.
@@ -848,7 +848,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-[#2A2A2A] mt-12 pt-8 text-center">
-            <p className="text-[#707070]">&copy; {new Date().getFullYear()} StaticShield. All rights reserved.</p>
+            <p className="text-[#707070]">&copy; {new Date().getFullYear()} CloudRift. All rights reserved.</p>
           </div>
         </div>
       </footer>

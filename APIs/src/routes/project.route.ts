@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { uploadFile } from "../controllers/project/upload.controller";
 import { getProject } from "../controllers/project/get.controller";
-import {updateProjectStats} from "../controllers/project/update.controller";
+import {updateProjectStats, deleteProject} from "../controllers/project/update.controller";
 import multer from "multer";
 import { authMiddleware } from "../middleware/auth.middleware";
 
@@ -15,5 +15,5 @@ router.post("/uploadFile", authMiddleware, uploadMiddleware.single("file"), uplo
 router.get("/getProject", authMiddleware, getProject);
 
 router.get('/updateStats',authMiddleware, updateProjectStats);
-
+router.delete('/delete', authMiddleware, deleteProject);
 export default router;

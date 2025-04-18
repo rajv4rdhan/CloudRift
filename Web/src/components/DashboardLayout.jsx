@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
               <Shield className="h-8 w-8 text-[#4ADE80]" />
-              <span className="font-bold text-xl text-white">StaticShield</span>
+              <span className="font-bold text-xl text-white">CloudRift</span>
             </Link>
           </div>
 

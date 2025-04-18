@@ -48,6 +48,7 @@ export default function DashboardPage() {
             id: project._id,
             name: project.projectName,
             domain: `${project.domain}.${project.tld}`,
+            unq: project.domain,
             status: status,
             visitors: project.logs.visitors,
             impressions: project.logs.impressions,
@@ -76,14 +77,8 @@ export default function DashboardPage() {
     return diffInHours > 24 ? `${Math.floor(diffInHours / 24)} days ago` : `${diffInHours} hours ago`
   }
 
-  async function checkWebsiteStatus(url) {
-    try {
-      
-      return "online"
-    } catch (error) {
-      console.error("Error checking website status:", error.message)
-      return "offline"
-    }
+  function checkWebsiteStatus() {
+    return "online";
   }
 
   async function handleRefreshStats() {
@@ -94,7 +89,6 @@ export default function DashboardPage() {
 
       const authToken = localStorage.getItem("token")
 
-      // Call the update-stats API
       const updateResponse = await axios.get(`${VITE_API_URL}/api/project/updateStats`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -104,7 +98,6 @@ export default function DashboardPage() {
       if (updateResponse.status === 200) {
         setRefreshSuccess(true)
 
-        // If successful, refresh the projects data
         const projectResponse = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -119,7 +112,8 @@ export default function DashboardPage() {
           return {
             id: project._id,
             name: project.projectName,
-            domain: new URL(project.projectUrl).hostname,
+            domain: `${project.domain}.${project.tld}`,
+            unq: project.domain,
             status: status,
             visitors: project.logs.visitors,
             impressions: project.logs.impressions,
@@ -131,7 +125,6 @@ export default function DashboardPage() {
 
         setProjects(updatedProjects)
 
-        // Auto-hide success message after 3 seconds
         setTimeout(() => {
           setRefreshSuccess(false)
         }, 3000)
@@ -140,7 +133,6 @@ export default function DashboardPage() {
       console.error("Error refreshing stats:", error)
       setRefreshError(error.message || "Failed to refresh stats. Please try again.")
 
-      // Auto-hide error message after 5 seconds
       setTimeout(() => {
         setRefreshError(null)
       }, 5000)
@@ -148,7 +140,54 @@ export default function DashboardPage() {
       setRefreshing(false)
     }
   }
+  const handleDeleteProject = async (domain) => {
+    try {
+      console.log("Deleting project with domain:", domain)
+      const authToken = localStorage.getItem("token")
+      const response = await axios.delete(`${VITE_API_URL}/api/project/delete`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        data: { domain: domain },
+      })
 
+      if (response.status === 200) {
+        setProjects((prevProjects) => prevProjects.filter((project) => project.domain !== domain))
+
+        // Refresh the dashboard stats after deletion
+        const projectResponse = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+
+        const projectList = projectResponse.data.projectList
+
+        const updatedProjects = projectList.map((project) => {
+          const lastDeployed = calculateTimeDifference(project.createdAt)
+          const status = checkWebsiteStatus(project.projectUrl)
+          return {
+            id: project._id,
+            name: project.projectName,
+            domain: `${project.domain}.${project.tld}`,
+            unq: project.domain,
+            status: status,
+            visitors: project.logs.visitors,
+            impressions: project.logs.impressions,
+            bandwidth_mb: project.logs.bandwidth_mb,
+            lastDeployed,
+            url: project.projectUrl,
+          }
+        })
+
+        setProjects(updatedProjects)
+      } else {
+        console.error("Error deleting project:", response.data.message)
+      }
+    } catch (error) {
+      console.error("Error deleting project:", error.message)
+    }
+  }
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -301,7 +340,7 @@ export default function DashboardPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            website.status === "active"
+                            website.status === "online"
                               ? "bg-[#4ADE80]/10 text-[#4ADE80]"
                               : "bg-[#F87171]/10 text-[#F87171]"
                           }`}
@@ -332,7 +371,9 @@ export default function DashboardPage() {
                           <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Edit">
                             <Edit className="h-4 w-4" />
                           </button>
-                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Delete">
+                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Delete"
+                            onClick={() => handleDeleteProject(website.unq)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
