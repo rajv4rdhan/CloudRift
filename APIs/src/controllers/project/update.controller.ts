@@ -5,6 +5,7 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 dotenv.config();
 import { S3Client, DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import axios from "axios";
 export const s3 = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
@@ -70,6 +71,7 @@ export const updateProjectStats = async (req: Request, res: Response) : Promise<
             if (domainStats) {
             const project = projectCollection.projects.find((p) => p.domain === domain);
             if (project) {
+                project.projectStatus = await checkUrlStatus(project.projectUrl);
                 project.logs.visitors += domainStats.visitors || 0;
                 project.logs.bandwidth_mb += domainStats.bandwidth_mb || 0;
                 project.logs.impressions += domainStats.impressions || 0;
@@ -175,3 +177,13 @@ export const deleteProject = async (req: Request, res: Response): Promise<void> 
     projectCollection.projects.splice(projectIndex, 1);
     return projectCollection.save();
   }
+
+async function checkUrlStatus(url: string): Promise<string> {
+    try {
+        const response = await axios.head(url);
+        return response.status >= 200 && response.status < 400 ? "online" : "offline";
+    } catch (error) {
+        console.error(`Error checking URL status for ${url}:`, error);
+        return "offline";
+    }
+}
