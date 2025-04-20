@@ -1,7 +1,7 @@
 const { PutObjectCommand, S3Client } = require('@aws-sdk/client-s3');
 const fs = require('fs-extra');
 const path = require('path');
-const mime = require('mime-types'); // ✅ Add this
+const mime = require('mime-types');
 const { BUCKET_NAME, REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY } = require('../config');
 
 const s3 = new S3Client({
