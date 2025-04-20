@@ -1,12 +1,13 @@
-const { handleProject } = require('./handleProject');
-
-
+const { connectClients } = require('./queue/redisClient');
+const { consumeQueue } = require('./queue/jobQueue');
 
 async function main() {
   try {
-    await handleProject('esevs', '2312');
+    await connectClients();
+    await consumeQueue(); // this will block and run indefinitely
   } catch (error) {
-    console.error('Error connecting to clients:', error);
+    console.error('❌ Error connecting to clients:', error);
   }
 }
+
 main();
