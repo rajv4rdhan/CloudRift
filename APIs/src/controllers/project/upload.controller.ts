@@ -27,73 +27,57 @@ interface UploadRequest extends Request {
 }
 
 
-export const uploadFile = async (req: UploadRequest, res: Response) => {
+export const uploadFile = async (req: UploadRequest, res: Response): Promise<void> => {
     try {
-        console.log("Attempting to upload file to AWS S3...");
-        console.log("req.body", req.body.username);
-
+        console.log("Attempting to upload files to AWS S3...");
         const userId = (req as any).user.id;
         const user = await User.findById(userId);
         const { projectName, domain, projectDescription, tld } = req.body;
 
-        if (!projectName) {
-            res.status(400).json({ error: "Project name is required" });
-            return;
-        }
-        if (!domain) {
-            req.body.domain = generateRandomCode(5);
-        }
-
-        if (!user) {
+        if (!projectName) res.status(400).json({ error: "Project name is required" }); 
+        if (!domain) req.body.domain = generateRandomCode(5);
+        if (!user){
             res.status(401).json({ error: "Unauthorized" });
             return;
-        }
+        } 
 
         const username = user.username;
-        console.log(username);
-        const file = req.file;
+        const files = req.files as Express.Multer.File[];
 
-        if (!username) {
-            res.status(400).json({ error: "Username is required" });
-            return;
+        if (!files || files.length === 0) res.status(400).json({ error: "No files uploaded" });
+
+        // Upload each file
+        console.log(files);
+        for (const file of files) {
+            const relativePath = (file as any).originalname; 
+            const s3Key = `${req.body.domain}/${relativePath}`;
+            const params = {
+                Bucket: bucketName,
+                Key: s3Key,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            };
+            await s3.send(new PutObjectCommand(params));
+            console.log(`Uploaded: ${s3Key}`);
         }
-        if (!file) {
-            res.status(400).json({ error: "File is required" });
-            return;
-        }
 
-        const uniqueFilename = `${file.originalname}`;
-        const s3Key = `${req.body.domain}/${uniqueFilename}`;
-        
-        const params = {
-            Bucket: bucketName,
-            Key: s3Key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-        };
+        const rootUrl = `${cloudFrontUrl}/${req.body.domain}/index.html`;
 
-        await s3.send(new PutObjectCommand(params));
-        console.log(`File uploaded successfully to ${s3Key}`);
-
-        const fileUrl = `${cloudFrontUrl}/${s3Key}`;
-
-        // Save project data to the database
         const logs = {
             visitors: 0,
             bandwidth_mb: 0,
             impressions: 0,
         };
-        const logs_processed = new Date();
+
         const projectData = {
             projectName,
             projectDescription,
             domain: req.body.domain,
-            projectUrl: fileUrl,
+            projectUrl: rootUrl,
             logs,
-            logs_processed,
+            logs_processed: new Date(),
             projectStatus: "active",
             tld
-            
         };
 
         let projectCollection = await ProjectCollection.findOne({ username });
@@ -105,9 +89,12 @@ export const uploadFile = async (req: UploadRequest, res: Response) => {
 
         await projectCollection.save();
 
-        res.json({ message: "File uploaded successfully", url: fileUrl });
+        res.json({ message: "Files uploaded successfully", url: rootUrl });
+        return;
+
     } catch (error) {
         console.error("AWS S3 upload error:", error);
         res.status(500).json({ error: "File upload failed" });
+        return;
     }
 };

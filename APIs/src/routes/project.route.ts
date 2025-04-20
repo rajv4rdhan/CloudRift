@@ -11,7 +11,7 @@ const router = Router();
 const storage = multer.memoryStorage();
 const uploadMiddleware = multer({ storage });
 
-router.post("/uploadFile", authMiddleware, uploadMiddleware.single("file"), uploadFile);
+router.post("/uploadFile", authMiddleware, uploadMiddleware.array("file"), uploadFile);
 router.get("/getProject", authMiddleware, getProject);
 
 router.get('/updateStats',authMiddleware, updateProjectStats);
