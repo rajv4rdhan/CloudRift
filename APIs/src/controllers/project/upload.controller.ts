@@ -130,7 +130,8 @@ export const uploadZip = async (req: UploadRequest, res: Response): Promise<void
         await s3.send(new PutObjectCommand(params));
         console.log(`Uploaded: ${s3Key}`);
 
-        pushToBuilder(req.body.domain, file.originalname, username).then(() => {
+        const fileNameWithoutExtension = file.originalname.replace(/\.[^/.]+$/, "");
+        pushToBuilder(req.body.domain, fileNameWithoutExtension, username).then(() => {
             console.log("Pushed to builder queue successfully");
         }
         ).catch((err) => {

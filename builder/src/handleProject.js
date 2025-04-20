@@ -9,10 +9,34 @@ const { ZIP_FILE, LOCAL_DIR } = require('./config');
 async function handleProject(projectName, zipFileName) {
   const zipFilePath = path.join(__dirname,'local_build', `${zipFileName}.zip`);
 
-  await downloadZipFile(projectName, zipFileName, zipFilePath);
-  const projectDir = await extractZip(zipFileName);
-  await runBuildCommands(projectDir);
-  await uploadBuild(projectDir,projectName);
+  try {
+    await downloadZipFile(projectName, zipFileName, zipFilePath);
+  } catch (error) {
+    console.error(`Error downloading zip file for project ${projectName}:`, error.message);
+    throw error;
+  }
+
+  let projectDir;
+  try {
+    projectDir = await extractZip(zipFileName);
+  } catch (error) {
+    console.error(`Error extracting zip file ${zipFileName}:`, error.message);
+    throw error;
+  }
+
+  try {
+    await runBuildCommands(projectDir);
+  } catch (error) {
+    console.error(`Error running build commands for project ${projectName}:`, error.message);
+    throw error;
+  }
+
+  try {
+    await uploadBuild(projectDir, projectName);
+  } catch (error) {
+    console.error(`Error uploading build for project ${projectName}:`, error.message);
+    throw error;
+  }
   
   try {
     await fs.remove(LOCAL_DIR);
