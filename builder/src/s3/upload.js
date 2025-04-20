@@ -1,6 +1,7 @@
 const { PutObjectCommand, S3Client } = require('@aws-sdk/client-s3');
 const fs = require('fs-extra');
 const path = require('path');
+const mime = require('mime-types'); // ✅ Add this
 const { BUCKET_NAME, REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY } = require('../config');
 
 const s3 = new S3Client({
@@ -11,7 +12,7 @@ const s3 = new S3Client({
     region: REGION,
 });
 
-async function uploadBuild(projectDir,projectName) {
+async function uploadBuild(projectDir, projectName) {
     const distFolder = path.join(projectDir, 'dist');
 
     const walk = async (dir) => {
@@ -25,12 +26,16 @@ async function uploadBuild(projectDir,projectName) {
                 await walk(fullPath);
             } else {
                 const content = await fs.readFile(fullPath);
+                const contentType = mime.lookup(fullPath) || 'application/octet-stream';
+
                 await s3.send(new PutObjectCommand({
                     Bucket: BUCKET_NAME,
                     Key: `${projectName}/${relativePath}`,
-                    Body: content
+                    Body: content,
+                    ContentType: contentType 
                 }));
-                console.log(`Uploaded ${relativePath}`);
+
+                console.log(`Uploaded ${relativePath} as ${contentType}`);
             }
         }
     };
@@ -38,4 +43,4 @@ async function uploadBuild(projectDir,projectName) {
     await walk(distFolder);
 }
 
-module.exports = {uploadBuild};
+module.exports = { uploadBuild };
