@@ -1,9 +1,9 @@
 const path = require('path');
 
 module.exports = {
-    BUCKET_NAME: 'dsvsedsee',
-    ACCESS_KEY_ID: 'AKIA6NYQMT3BLTS3HVQ6',
-    SECRET_ACCESS_KEY: '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',
+    BUCKET_NAME: 'static322423',
+    ACCESS_KEY_ID: 'AKIA6NYQMT3BPDZUQQBF',
+    SECRET_ACCESS_KEY: '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',
     S3_01: 'sdfesd',
     S3_FOLDER: 'sdfesd/build',
     LOCAL_DIR: path.join(__dirname, 'local_build'),
