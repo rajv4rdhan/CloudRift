@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-
-const uri = 'mongodb://localhost:27017/your-db-name'; // Replace with your Mongo URI
+const dotenv = require('dotenv');
+dotenv.config();
+const uri = process.env.MONGODB_URI 
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const projectLogSchema = new mongoose.Schema({

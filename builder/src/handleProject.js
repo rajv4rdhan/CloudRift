@@ -7,7 +7,7 @@ const { uploadBuild } = require('./s3/upload');
 const { ZIP_FILE, LOCAL_DIR } = require('./config');
 const dayjs = require('dayjs'); // or use new Date().toISOString()
 
-async function handleProject(projectName, zipFileName) {
+async function handleProject(projectName, zipFileName, username) {
   const zipFilePath = path.join(__dirname, 'local_build', `${zipFileName}.zip`);
   const logs = [];
   const startTime = Date.now();
@@ -50,3 +50,6 @@ async function handleProject(projectName, zipFileName) {
     };
   }
 }
+
+
+module.exports = { handleProject };

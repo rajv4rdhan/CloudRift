@@ -11,7 +11,7 @@ async function consumeQueue() {
         const payload = JSON.parse(result.element);
         const { DomainName, zipFileName, username } = payload;
 
-        console.log(`📦 Received project - Domain: ${DomainName}, Zip: ${zipFileName}`);
+        console.log(`📦 Received project - Domain: ${DomainName}, Zip: ${zipFileName}, ${username}`);
 
         const logEntry = {
           type: 'build',
@@ -23,7 +23,7 @@ async function consumeQueue() {
         };
 
         try {
-          await handleProject(DomainName, zipFileName);
+          await handleProject(DomainName, zipFileName, username);
 
           logEntry.status = 'success';
           logEntry.message = 'Build completed successfully';
