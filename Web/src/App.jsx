@@ -8,6 +8,7 @@ import CreateWebsitePage from "./pages/CreateWebsitePage"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
 import AIGeneratePage from "./pages/AIGeneratePage"
+import ProjectDetailPage from "./pages/ProjectDetailPage"
 import { ThemeProvider } from "./components/theme-provider"
 import ProtectedRoute from "./components/ProtectedRoute"
 
@@ -64,6 +65,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/project/:id"
+            element={
+              <ProtectedRoute>
+                <ProjectDetailPage />
               </ProtectedRoute>
             }
           />

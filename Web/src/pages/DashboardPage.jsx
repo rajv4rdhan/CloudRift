@@ -16,7 +16,6 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  Eye,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import axios from "axios"
@@ -47,12 +46,9 @@ export default function DashboardPage() {
           return {
             id: project._id,
             name: project.projectName,
-            domain: `${project.domain}.${project.tld}`,
-            unq: project.domain,
+            domain: new URL(project.projectUrl).hostname,
             status: status,
-            visitors: project.logs.visitors,
-            impressions: project.logs.impressions,
-            bandwidth_mb: project.logs.bandwidth_mb,
+            visitors: Math.floor(Math.random() * 2000),
             lastDeployed,
             url: project.projectUrl,
           }
@@ -77,8 +73,15 @@ export default function DashboardPage() {
     return diffInHours > 24 ? `${Math.floor(diffInHours / 24)} days ago` : `${diffInHours} hours ago`
   }
 
-  function checkWebsiteStatus() {
-    return "online";
+  async function checkWebsiteStatus(url) {
+    try {
+      console.log("Checking status for:", url)
+      const response = await axios.get(url, { timeout: 5000 })
+      return response.status === 200 ? "online" : "offline"
+    } catch (error) {
+      console.error("Error checking website status:", error.message)
+      return "offline"
+    }
   }
 
   async function handleRefreshStats() {
@@ -89,7 +92,8 @@ export default function DashboardPage() {
 
       const authToken = localStorage.getItem("token")
 
-      const updateResponse = await axios.get(`${VITE_API_URL}/api/project/updateStats`, {
+      // Call the update-stats API
+      const updateResponse = await axios.get(`${VITE_API_URL}/api/project/update-stats`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -98,6 +102,7 @@ export default function DashboardPage() {
       if (updateResponse.status === 200) {
         setRefreshSuccess(true)
 
+        // If successful, refresh the projects data
         const projectResponse = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -112,12 +117,9 @@ export default function DashboardPage() {
           return {
             id: project._id,
             name: project.projectName,
-            domain: `${project.domain}.${project.tld}`,
-            unq: project.domain,
+            domain: new URL(project.projectUrl).hostname,
             status: status,
-            visitors: project.logs.visitors,
-            impressions: project.logs.impressions,
-            bandwidth_mb: project.logs.bandwidth_mb,
+            visitors: Math.floor(Math.random() * 2000),
             lastDeployed,
             url: project.projectUrl,
           }
@@ -125,6 +127,7 @@ export default function DashboardPage() {
 
         setProjects(updatedProjects)
 
+        // Auto-hide success message after 3 seconds
         setTimeout(() => {
           setRefreshSuccess(false)
         }, 3000)
@@ -133,6 +136,7 @@ export default function DashboardPage() {
       console.error("Error refreshing stats:", error)
       setRefreshError(error.message || "Failed to refresh stats. Please try again.")
 
+      // Auto-hide error message after 5 seconds
       setTimeout(() => {
         setRefreshError(null)
       }, 5000)
@@ -140,54 +144,7 @@ export default function DashboardPage() {
       setRefreshing(false)
     }
   }
-  const handleDeleteProject = async (domain) => {
-    try {
-      console.log("Deleting project with domain:", domain)
-      const authToken = localStorage.getItem("token")
-      const response = await axios.delete(`${VITE_API_URL}/api/project/delete`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        data: { domain: domain },
-      })
 
-      if (response.status === 200) {
-        setProjects((prevProjects) => prevProjects.filter((project) => project.domain !== domain))
-
-        // Refresh the dashboard stats after deletion
-        const projectResponse = await axios.get(`${VITE_API_URL}/api/project/getProject`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        })
-
-        const projectList = projectResponse.data.projectList
-
-        const updatedProjects = projectList.map((project) => {
-          const lastDeployed = calculateTimeDifference(project.createdAt)
-          const status = checkWebsiteStatus(project.projectUrl)
-          return {
-            id: project._id,
-            name: project.projectName,
-            domain: `${project.domain}.${project.tld}`,
-            unq: project.domain,
-            status: status,
-            visitors: project.logs.visitors,
-            impressions: project.logs.impressions,
-            bandwidth_mb: project.logs.bandwidth_mb,
-            lastDeployed,
-            url: project.projectUrl,
-          }
-        })
-
-        setProjects(updatedProjects)
-      } else {
-        console.error("Error deleting project:", response.data.message)
-      }
-    } catch (error) {
-      console.error("Error deleting project:", error.message)
-    }
-  }
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -214,9 +171,7 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[#B0B0B0] text-sm">Total Visitors</p>
-                <h3 className="text-2xl font-bold text-white mt-1">
-                {projects.reduce((total, project) => total + project.visitors, 0).toLocaleString()}
-                </h3>
+                <h3 className="text-2xl font-bold text-white mt-1">15.8K</h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
                 <Users className="h-5 w-5 text-[#4ADE80]" />
@@ -228,9 +183,7 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[#B0B0B0] text-sm">Bandwidth Used</p>
-                <h3 className="text-2xl font-bold text-white mt-1">
-                {projects.reduce((total, project) => total + project.bandwidth_mb, 0).toLocaleString()} MB
-                </h3>
+                <h3 className="text-2xl font-bold text-white mt-1">128 GB</h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
                 <BarChart className="h-5 w-5 text-[#4ADE80]" />
@@ -241,13 +194,11 @@ export default function DashboardPage() {
           <div className="bg-[#1A1A1A] p-6 rounded-xl border border-[#2A2A2A]">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[#B0B0B0] text-sm">Total Impressions</p>
-                <h3 className="text-2xl font-bold text-white mt-1">
-                  {projects.reduce((total, project) => total + project.impressions, 0).toLocaleString()}
-                </h3>
+                <p className="text-[#B0B0B0] text-sm">Threats Blocked</p>
+                <h3 className="text-2xl font-bold text-white mt-1">2.4K</h3>
               </div>
               <div className="w-10 h-10 bg-[#4ADE80]/10 rounded-lg flex items-center justify-center">
-                <Eye className="h-5 w-5 text-[#4ADE80]" />
+                <Shield className="h-5 w-5 text-[#4ADE80]" />
               </div>
             </div>
           </div>
@@ -340,7 +291,7 @@ export default function DashboardPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            website.status === "online"
+                            website.status === "active"
                               ? "bg-[#4ADE80]/10 text-[#4ADE80]"
                               : "bg-[#F87171]/10 text-[#F87171]"
                           }`}
@@ -368,12 +319,14 @@ export default function DashboardPage() {
                           >
                             <ExternalLink className="h-4 w-4" />
                           </a>
-                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Edit">
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Delete"
-                            onClick={() => handleDeleteProject(website.unq)}
+                          <Link
+                            to={`/project/${website.id}`}
+                            className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]"
+                            title="View Details"
                           >
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                          <button className="p-1 rounded-md text-[#E0E0E0] hover:bg-[#2A2A2A]" title="Delete">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
