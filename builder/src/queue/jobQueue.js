@@ -2,7 +2,7 @@ const { consumer, LIST_KEY } = require('./redisClient');
 const { handleProject } = require('../handleProject');
 
 async function consumeQueue() {
-  console.log('🚀 Waiting for projects in Redis...');
+  console.log('🚀 Waiting for projects...');
 
   while (true) {
     try {
