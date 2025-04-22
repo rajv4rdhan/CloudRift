@@ -1,11 +1,16 @@
-const { exec } = require('child_process');
-
-function runBuildCommands(projectDir) {
+function runBuildCommands(projectDir, logs = []) {
   return new Promise((resolve, reject) => {
     const child = exec('npm install && npm run build', { cwd: projectDir });
 
-    child.stdout.pipe(process.stdout);
-    child.stderr.pipe(process.stderr);
+    child.stdout.on('data', (data) => {
+      logs.push(data.toString());
+      process.stdout.write(data);
+    });
+
+    child.stderr.on('data', (data) => {
+      logs.push(data.toString());
+      process.stderr.write(data);
+    });
 
     child.on('exit', (code) => {
       if (code === 0) resolve();
@@ -17,6 +22,3 @@ function runBuildCommands(projectDir) {
     });
   });
 }
-
-
-module.exports = {runBuildCommands};

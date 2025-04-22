@@ -5,50 +5,48 @@ const { extractZip } = require('./utils/unzip');
 const { runBuildCommands } = require('./utils/runBuild');
 const { uploadBuild } = require('./s3/upload');
 const { ZIP_FILE, LOCAL_DIR } = require('./config');
+const dayjs = require('dayjs'); // or use new Date().toISOString()
 
 async function handleProject(projectName, zipFileName) {
-  const zipFilePath = path.join(__dirname,'local_build', `${zipFileName}.zip`);
+  const zipFilePath = path.join(__dirname, 'local_build', `${zipFileName}.zip`);
+  const logs = [];
+  const startTime = Date.now();
+
+  const logAndCapture = (msg) => {
+    logs.push(msg);
+    console.log(msg);
+  };
 
   try {
+    logAndCapture(`⬇️ Downloading ${zipFileName} for ${projectName}`);
     await downloadZipFile(projectName, zipFileName, zipFilePath);
-  } catch (error) {
-    console.error(`Error downloading zip file for project ${projectName}:`, error.message);
-    throw error;
-  }
 
-  let projectDir;
-  try {
-    projectDir = await extractZip(zipFileName);
-  } catch (error) {
-    console.error(`Error extracting zip file ${zipFileName}:`, error.message);
-    throw error;
-  }
+    const projectDir = await extractZip(zipFileName);
+    await runBuildCommands(projectDir, logs);
 
-  try {
-    await runBuildCommands(projectDir);
-  } catch (error) {
-    console.error(`Error running build commands for project ${projectName}:`, error.message);
-    throw error;
-  }
-
-  try {
     await uploadBuild(projectDir, projectName);
-  } catch (error) {
-    console.error(`Error uploading build for project ${projectName}:`, error.message);
-    throw error;
-  }
-  
-  try {
     await fs.remove(LOCAL_DIR);
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    return {
+      type: "build",
+      status: "success",
+      message: "Build completed successfully",
+      details: `Build completed in ${duration} seconds`,
+      timestamp: dayjs().format("MMM D, YYYY HH:mm:ss"),
+      logs: logs.join('\n'),
+      domain: projectName,
+    };
   } catch (error) {
-    if (error.code === 'EPERM') {
-      console.warn(`Warning: Failed to remove directory ${LOCAL_DIR} due to permission error:`, error.message);
-    } else {
-      throw error;
-    }
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    return {
+      type: "build",
+      status: "error",
+      message: error.message,
+      details: `Build failed after ${duration} seconds`,
+      timestamp: dayjs().format("MMM D, YYYY HH:mm:ss"),
+      logs: logs.join('\n'),
+      domain: projectName,
+    };
   }
-
-  console.log(`Project ${projectName} processed and cleaned up.`);
 }
-
-module.exports = { handleProject };
