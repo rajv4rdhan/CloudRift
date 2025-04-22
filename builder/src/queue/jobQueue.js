@@ -1,6 +1,6 @@
 const { consumer, LIST_KEY } = require('./redisClient');
 const { handleProject } = require('../handleProject');
-const { sendToDb } = require('../queue/sendToDb');
+const { sendToDb } = require('../utils/sendTodb');
 async function consumeQueue() {
   console.log('🚀 Waiting for projects...');
 
