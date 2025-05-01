@@ -23,11 +23,11 @@ async function consumeQueue() {
         };
 
         try {
-          await handleProject(DomainName, zipFileName, username);
+          const resultObj = await handleProject(DomainName, zipFileName, username);
 
-          logEntry.status = 'success';
-          logEntry.message = 'Build completed successfully';
-          logEntry.details = `Build completed at ${new Date().toLocaleTimeString()}`;
+          logEntry.status = resultObj.status;
+          logEntry.message = resultObj.message;
+          logEntry.details = resultObj.logs;
         } catch (error) {
           logEntry.status = 'error';
           logEntry.message = 'Build failed';

@@ -1,14 +1,7 @@
-const { GetObjectCommand, S3Client } = require('@aws-sdk/client-s3');
+const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs-extra');
 const { LOCAL_DIR, BUCKET_NAME, REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY } = require('../config');
-
-const s3 = new S3Client({
-    credentials: {
-        accessKeyId: ACCESS_KEY_ID,
-        secretAccessKey: SECRET_ACCESS_KEY,
-    },
-    region: REGION,
-});
+const {s3} = require('../config/s3');
 
 async function downloadZipFile(projectDomaine, zipFileName, zipFilePath) {
     const command = new GetObjectCommand({
