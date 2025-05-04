@@ -5,15 +5,9 @@ import { User } from "../../models/user.model";
 import {generateRandomCode} from "../../utils/random";
 import { ProjectCollection } from "../../models/project.model";
 import { pushToBuilder } from "../../utils/redis";
+import { s3 } from "../../config/s3";
 dotenv.config();
 
-const s3 = new S3Client({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    },
-});
 
 const bucketName = process.env.S3_BUCKET_NAME || "";
 const cloudFrontUrl = process.env.CLOUDFRONT_URL || "";
