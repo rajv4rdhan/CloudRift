@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { uploadFile } from "../controllers/project/upload.controller";
+import { uploadFile, uploadZip } from "../controllers/project/upload.controller";
 import { getProject } from "../controllers/project/get.controller";
 import {updateProjectStats, deleteProject} from "../controllers/project/update.controller";
 import multer from "multer";
@@ -11,7 +11,8 @@ const router = Router();
 const storage = multer.memoryStorage();
 const uploadMiddleware = multer({ storage });
 
-router.post("/uploadFile", authMiddleware, uploadMiddleware.single("file"), uploadFile);
+router.post("/uploadFile", authMiddleware, uploadMiddleware.array("file"), uploadFile);
+router.post("/uploadZip", authMiddleware, uploadMiddleware.single("file"), uploadZip);
 router.get("/getProject", authMiddleware, getProject);
 
 router.get('/updateStats',authMiddleware, updateProjectStats);
