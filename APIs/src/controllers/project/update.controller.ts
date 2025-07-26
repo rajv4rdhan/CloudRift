@@ -1,21 +1,11 @@
 import { ProjectCollection } from "../../models/project.model";
 import { Request, Response } from "express";
 import { User } from "../../models/user.model";
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 dotenv.config();
-import { s3 } from "../../config/s3";
-import {
-  S3Client,
-  DeleteObjectsCommand,
-  ListObjectsV2Command,
-} from "@aws-sdk/client-s3";
 import { deleteS3Folder } from "../../services/project/s3.service";
-import axios from "axios";
 import { getStats } from "../../services/project/stats.service";
 import {checkUrlStatus} from "../../services/project/urlStatus.service";
-
-const bucketName = process.env.S3_BUCKET_NAME || "";
 
 export const updateProjectStats = async (
   req: Request,
