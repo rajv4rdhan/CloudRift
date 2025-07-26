@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { User } from "../../models/user.model";
 import dotenv from "dotenv";
 dotenv.config();
-import { deleteS3Folder } from "../../services/project/s3.service";
+import { deleteFromS3 } from "../../services/project/s3.service";
 import { getStats } from "../../services/project/stats.service";
 import {checkUrlStatus} from "../../services/project/urlStatus.service";
 
@@ -101,12 +101,12 @@ export const deleteProject = async (
 
     const folderKey = `${domain}/`;
     const [s3Result] = await Promise.all([
-      deleteS3Folder(folderKey),
+      deleteFromS3(folderKey),
       updateProjectCollection(projectCollection, projectIndex),
     ]);
 
-    if (s3Result.error) {
-      res.status(500).json({ error: s3Result.error });
+    if (!s3Result.success) {
+      res.status(500).json({ error: "Failed to delete project from S3" });
       return;
     }
 

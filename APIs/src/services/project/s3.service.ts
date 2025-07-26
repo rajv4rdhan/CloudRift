@@ -1,32 +1,62 @@
-import {s3} from "../../config/s3";
-import { S3Client, DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import dotenv from "dotenv";
-dotenv.config();
-const bucketName = process.env.S3_BUCKET_NAME || "";
+import { PutObjectCommand,DeleteObjectCommand } from "@aws-sdk/client-s3";
+import s3Client from "../../config/s3";
 
-export async function deleteS3Folder(folderKey: string) {
-    try {
-      const listParams = {
-        Bucket: bucketName,
-        Prefix: folderKey,
-      };
-  
-      const listedObjects = await s3.send(new ListObjectsV2Command(listParams));
-  
-      if (listedObjects.Contents && listedObjects.Contents.length > 0) {
-        const deleteParams = {
-          Bucket: bucketName,
-          Delete: {
-            Objects: listedObjects.Contents.map((item) => ({ Key: item.Key })),
-          },
-        };
-  
-        await s3.send(new DeleteObjectsCommand(deleteParams));
-        console.log(`Folder ${folderKey} deleted successfully from S3.`);
-      }
-      return { success: true };
-    } catch (error) {
-      console.error(`Error deleting folder ${folderKey} from S3:`, error);
-      return { error: "Failed to delete folder from S3" };
-    }
+export const uploadToS3 = async (
+  fileBuffer: Buffer,
+  key: string,
+  contentType: string
+) => {
+  const Bucket = process.env.AWS_BUCKET_NAME;
+
+  if (!Bucket) {
+    throw new Error("S3 bucket name is missing in environment variables.");
   }
+
+  const command = new PutObjectCommand({
+    Bucket,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    console.log("[DEBUG]Successfully uploaded to S3:", key, response);
+
+    return {
+      success: true,
+      key,
+      location: `${process.env.ENDPOINT_URL}/${Bucket}/${key}`,
+      response,
+    };
+  } catch (error) {
+    console.error("Error uploading to S3:", error);
+    throw error;
+  }
+};
+
+export const deleteFromS3 = async (key: string) => {
+  const Bucket = process.env.AWS_BUCKET_NAME;
+
+  if (!Bucket) {
+    throw new Error("S3 bucket name is missing in environment variables.");
+  }
+
+  const command = new DeleteObjectCommand({
+    Bucket,
+    Key: key,
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    console.log("[DEBUG]Successfully deleted from S3:", key, response);
+    return {
+      success: true,
+      key,
+      response,
+    };
+  } catch (error) {
+    console.error("Error deleting from S3:", error);
+    throw error;
+  }
+};

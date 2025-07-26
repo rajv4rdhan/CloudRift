@@ -1,15 +1,14 @@
 import dotenv from "dotenv";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {uploadToS3, deleteFromS3} from "../../services/project/s3.service";
 import { Request, Response } from "express";
 import { User } from "../../models/user.model";
 import {generateRandomCode} from "../../utils/random";
 import { ProjectCollection } from "../../models/project.model";
 import { pushToBuilder } from "../../utils/redis";
-import { s3 } from "../../config/s3";
 dotenv.config();
 
 
-const bucketName = process.env.S3_BUCKET_NAME || "";
+const bucketName = process.env.AWS_BUCKET_NAME || "";
 const cloudFrontUrl = process.env.CLOUDFRONT_URL || "";
 
 console.log(`Connected to AWS S3 in region: ${process.env.AWS_REGION}`);
@@ -46,14 +45,7 @@ export const uploadFile = async (req: UploadRequest, res: Response): Promise<voi
         for (const file of files) {
             const relativePath = (file as any).originalname; 
             const s3Key = `${req.body.domain}/${relativePath}`;
-            const params = {
-                Bucket: bucketName,
-                Key: s3Key,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-            };
-            await s3.send(new PutObjectCommand(params));
-            console.log(`Uploaded: ${s3Key}`);
+            await uploadToS3(file.buffer, s3Key, file.mimetype);
         }
 
         const rootUrl = `${cloudFrontUrl}/${req.body.domain}/index.html`;
@@ -115,13 +107,7 @@ export const uploadZip = async (req: UploadRequest, res: Response): Promise<void
             return;
         }
         const s3Key = `${req.body.domain}/build/${file.originalname}`;
-        const params = {
-            Bucket: bucketName,
-            Key: s3Key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-        };
-        await s3.send(new PutObjectCommand(params));
+        const response = await uploadToS3(file.buffer, s3Key, file.mimetype);
         console.log(`Uploaded: ${s3Key}`);
 
         const fileNameWithoutExtension = file.originalname.replace(/\.[^/.]+$/, "");

@@ -1,11 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
 import authRoutes from "./routes/auth.route";
 import demoRoutes from "./routes/demo.route";
 import uploadS3 from "./routes/project.route";
 import cors from "cors";
 
-dotenv.config();
 
 const app = express();
 app.use(cors({
