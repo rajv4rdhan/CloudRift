@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }) {
     <div className="min-h-screen bg-[#121212] flex flex-col">
       {/* Header */}
       <header className="border-b border-[#2A2A2A] bg-[#121212]/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
               <Shield className="h-8 w-8 text-[#4ADE80]" />

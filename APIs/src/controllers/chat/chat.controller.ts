@@ -87,7 +87,22 @@ export const chat = async(req: Request, res: Response) =>{
         await chatSession.save();
 
         if(parsedResponse.files && parsedResponse.files.length > 0 && fileSession){
-            fileSession.file.push(...parsedResponse.files);
+            // Update existing files or add new ones
+            parsedResponse.files.forEach((newFile: any) => {
+                const existingFileIndex = fileSession.file.findIndex(
+                    (existingFile: any) => existingFile.filename === newFile.filename
+                );
+                
+                if(existingFileIndex !== -1) {
+                    // Update existing file
+                    console.log(`Updating existing file: ${newFile.filename}`);
+                    fileSession.file[existingFileIndex] = newFile;
+                } else {
+                    // Add new file
+                    console.log(`Adding new file: ${newFile.filename}`);
+                    fileSession.file.push(newFile);
+                }
+            });
             await fileSession.save();
         }
 
