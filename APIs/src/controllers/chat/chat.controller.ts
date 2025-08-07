@@ -34,8 +34,9 @@ export const getChatHistory = async(req: Request, res: Response) =>{
 export const chat = async(req: Request, res: Response) =>{
     try{
         const userId = (req as any).user.id;
-        const {message, _id} = req.body;
-        
+        const {id} = req.params;
+        const {message} = req.body;
+        const _id = id;
         if(!message){
             res.status(400).json({message:"Message is required"});
             return;

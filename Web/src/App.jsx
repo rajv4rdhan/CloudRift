@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 import LandingPage from "./pages/LandingPage"
 import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
@@ -16,6 +17,28 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Router>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#1A1A1A',
+              color: '#E0E0E0',
+              border: '1px solid #2A2A2A',
+            },
+            success: {
+              iconTheme: {
+                primary: '#4ADE80',
+                secondary: '#121212',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#EF4444',
+                secondary: '#121212',
+              },
+            },
+          }}
+        />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
