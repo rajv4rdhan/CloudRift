@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import 'highlight.js/styles/atom-one-dark.css';
 import { Toaster } from "react-hot-toast"
 import LandingPage from "./pages/LandingPage"
 import LoginPage from "./pages/LoginPage"

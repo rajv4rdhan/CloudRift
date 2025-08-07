@@ -5,11 +5,11 @@ import {getChatSession, getSingleChat, createChatSession} from "../controllers/c
 
 const router = Router();
 
-
+router.post("/chat/session",authMiddleware, createChatSession);
+router.get("/chat/session",authMiddleware, getChatSession);
 router.get("/chat/history/:id",authMiddleware, getChatHistory);
 router.post("/chat/:id",authMiddleware, chat);
-router.get("/chat/session",authMiddleware, getChatSession);
 router.get("/chat/session/:id",authMiddleware, getSingleChat);
-router.post("/chat/session",authMiddleware, createChatSession);
+
 
 export default router;

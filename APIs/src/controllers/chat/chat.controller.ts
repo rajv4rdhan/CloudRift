@@ -77,11 +77,13 @@ export const chat = async(req: Request, res: Response) =>{
         const client = new ChatClient();
         const grpcResponse = await client.sendMessage(message);
         
-        const parsedResponse = typeof grpcResponse === 'string' ? JSON.parse(grpcResponse) : grpcResponse;
-        
+        let parsedResponse = typeof grpcResponse === 'string' ? JSON.parse(grpcResponse) : grpcResponse;
+        if(!parsedResponse.message.content){
+            parsedResponse.message.content = "code updated"
+        }
         const chatEntry = {
             user: message,
-            system: parsedResponse.message.content
+            system: parsedResponse.message.content 
         };
         chatSession.chat.push(chatEntry as any);
         await chatSession.save();

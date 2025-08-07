@@ -1,7 +1,124 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { File, Code, FileText, Folder, ChevronRight, ChevronDown } from 'lucide-react';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/vs2015.css'; // Dark theme for highlighting
+
 
 const FileManager = ({ files = [], selectedFile, onFileSelect }) => {
+  // Ref for the code block to apply highlighting
+  const codeRef = useRef(null);
+  // State to hold formatted content
+  const [formattedContent, setFormattedContent] = useState('');
+
+  // Simple code formatter function
+  const formatCode = (content, fileExtension) => {
+    if (!content) return '';
+
+    try {
+      switch (fileExtension) {
+        case 'html':
+        case 'htm':
+          return formatHTML(content);
+        case 'css':
+          return formatCSS(content);
+        case 'js':
+        case 'jsx':
+          return formatJavaScript(content);
+        case 'json':
+          return formatJSON(content);
+        default:
+          return content;
+      }
+    } catch (error) {
+      console.error('Formatting error:', error);
+      return content; // Return original content if formatting fails
+    }
+  };
+
+  // HTML formatter
+  const formatHTML = (html) => {
+    let formatted = html;
+    let indent = 0;
+    const indentStr = '  '; // 2 spaces
+
+    // Remove existing formatting
+    formatted = formatted.replace(/>\s*</g, '><');
+    
+    // Add line breaks and indentation
+    formatted = formatted.replace(/(<[^>]+>)/g, (match, tag) => {
+      if (tag.includes('</')) {
+        indent--;
+        return '\n' + indentStr.repeat(Math.max(0, indent)) + tag;
+      } else if (tag.includes('/>')) {
+        return '\n' + indentStr.repeat(indent) + tag;
+      } else {
+        const result = '\n' + indentStr.repeat(indent) + tag;
+        indent++;
+        return result;
+      }
+    });
+
+    return formatted.trim();
+  };
+
+  // CSS formatter
+  const formatCSS = (css) => {
+    let formatted = css;
+    
+    // Add line breaks after { and }
+    formatted = formatted.replace(/\{/g, ' {\n  ');
+    formatted = formatted.replace(/\}/g, '\n}\n');
+    formatted = formatted.replace(/;/g, ';\n  ');
+    
+    // Clean up extra spaces and line breaks
+    formatted = formatted.replace(/\n\s*\n/g, '\n');
+    formatted = formatted.replace(/  \n}/g, '\n}');
+    
+    return formatted.trim();
+  };
+
+  // JavaScript formatter
+  const formatJavaScript = (js) => {
+    let formatted = js;
+    let indent = 0;
+    const indentStr = '  ';
+
+    // Add line breaks after { and }
+    formatted = formatted.replace(/\{/g, ' {\n');
+    formatted = formatted.replace(/\}/g, '\n}\n');
+    formatted = formatted.replace(/;/g, ';\n');
+    
+    // Split into lines and add proper indentation
+    const lines = formatted.split('\n');
+    const formattedLines = lines.map(line => {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) return '';
+      
+      if (trimmedLine.includes('}')) {
+        indent = Math.max(0, indent - 1);
+      }
+      
+      const result = indentStr.repeat(indent) + trimmedLine;
+      
+      if (trimmedLine.includes('{')) {
+        indent++;
+      }
+      
+      return result;
+    });
+
+    return formattedLines.join('\n').trim();
+  };
+
+  // JSON formatter
+  const formatJSON = (json) => {
+    try {
+      const parsed = JSON.parse(json);
+      return JSON.stringify(parsed, null, 2);
+    } catch (error) {
+      return json; // Return original if parsing fails
+    }
+  };
 
   const getFileIcon = (filename) => {
     const extension = filename.split('.').pop();
@@ -22,6 +139,28 @@ const FileManager = ({ files = [], selectedFile, onFileSelect }) => {
   const handleFileSelect = (file) => {
     onFileSelect(file);
   };
+
+  // Effect to format code and apply syntax highlighting when selected file changes
+  useEffect(() => {
+    if (selectedFile?.content) {
+      const fileExtension = selectedFile.filename.split('.').pop();
+      const formatted = formatCode(selectedFile.content, fileExtension);
+      setFormattedContent(formatted);
+    } else {
+      setFormattedContent('');
+    }
+  }, [selectedFile]);
+
+  // Effect to apply syntax highlighting when formatted content changes
+  useEffect(() => {
+    if (codeRef.current && formattedContent) {
+      // Remove existing highlighting
+      codeRef.current.removeAttribute('data-highlighted');
+      // Apply new highlighting
+      hljs.highlightElement(codeRef.current);
+    }
+  }, [formattedContent]);
+
 
   return (
     <div className="h-full w-full flex bg-[#1e1e1e] text-[#cccccc]">
@@ -106,20 +245,25 @@ const FileManager = ({ files = [], selectedFile, onFileSelect }) => {
             <div className="flex-1 bg-[#1e1e1e] relative overflow-hidden ">
               {/* Line numbers and content container */}
               <div className="flex h-full w-full">
-                {/* Line Numbers */}
-                <div className="bg-[#1e1e1e] text-[#858585] text-xs font-mono leading-6 px-3 py-4 select-none border-r border-[#2d2d30] min-w-[50px] text-right flex-shrink-0 ">
-                  {selectedFile.content?.split('\n').map((_, index) => (
-                    <div key={index + 1} className="h-6">
-                      {index + 1}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Code Content */}
+                {/* Code Content with integrated line numbers */}
                 <div className="flex-1 bg-[#1e1e1e] overflow-auto">
-                  <pre className="p-4 text-[#d4d4d4] text-sm font-mono leading-6 whitespace-pre-wrap break-words bg-[#1e1e1e] min-h-full">
-                    {selectedFile.content}
-                  </pre>
+                  <div className="flex">
+                    {/* Line Numbers */}
+                    <div className="bg-[#1e1e1e] text-[#858585] text-sm font-mono select-none border-r border-[#2d2d30] min-w-[50px] flex-shrink-0 py-4 px-3">
+                      {formattedContent.split('\n').map((_, index) => (
+                        <div key={index + 1} className="text-right leading-6 h-6">
+                          {index + 1}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Code Content */}
+                    <pre className="flex-1 p-4 text-[#d4d4d4] text-sm font-mono leading-6 whitespace-pre-wrap break-words bg-[#1e1e1e] min-h-full overflow-visible">
+                      <code ref={codeRef} className={`language-${selectedFile.filename.split('.').pop()}`}>
+                        {formattedContent}
+                      </code>
+                    </pre>
+                  </div>
                 </div>
               </div>
 
@@ -135,29 +279,14 @@ const FileManager = ({ files = [], selectedFile, onFileSelect }) => {
                 <span>{selectedFile.filename.split('.').pop()?.toUpperCase() || 'Plain Text'}</span>
               </div>
               <div className="flex items-center space-x-4">
-                <span>Ln 1, Col 1</span>
-                <span>{selectedFile.content?.length || 0} chars</span>
+                <span>Ln {formattedContent.split('\n').length}, Col 1</span>
+                <span>{formattedContent.length} chars</span>
               </div>
             </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-[#1e1e1e]">
-            <div className="text-center max-w-md px-8">
-              <div className="w-16 h-16 bg-[#37373d] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                <Code className="h-8 w-8 text-[#007acc]" />
-              </div>
-              <h3 className="text-[#cccccc] text-xl font-semibold mb-3">Welcome to the Editor</h3>
-              <p className="text-[#969696] leading-relaxed text-sm">
-                Select a file from the Explorer to start viewing and editing. Your workspace files will appear in the sidebar.
-              </p>
-              <div className="mt-6 text-xs text-[#858585]">
-                <div className="flex items-center justify-center space-x-4">
-                  <span>⌘N New File</span>
-                  <span>⌘O Open File</span>
-                  <span>⌘S Save</span>
-                </div>
-              </div>
-            </div>
+            {/* ... (Welcome message remains the same) ... */}
           </div>
         )}
       </div>

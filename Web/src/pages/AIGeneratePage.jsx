@@ -49,14 +49,14 @@ export default function AIGeneratePage() {
   }, [messages])
 
   useEffect(() => {
-    // Update generated files when chat history changes
-    if (files.length > 0) {
+    // Update generated files when chat history changes (only on initial load)
+    if (files.length > 0 && generatedFiles.length === 0) {
       setGeneratedFiles(files)
       if (!selectedFile && files.length > 0) {
         setSelectedFile(files[0])
       }
     }
-  }, [files])
+  }, [files, generatedFiles.length])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -87,13 +87,38 @@ export default function AIGeneratePage() {
         message: message,
       })
 
-      // Handle file updates
+      // Handle file updates - merge with existing files instead of replacing
       if (response.files && response.files.length > 0) {
-        setGeneratedFiles(response.files)
-        // Update selected file if it exists in the new files, otherwise select first file
-        const currentFile = response.files.find(f => f.filename === selectedFile?.filename)
-        setSelectedFile(currentFile || response.files[0])
-        toast.success(`Generated ${response.filesCount} file(s)`)
+        setGeneratedFiles(prevFiles => {
+          const updatedFiles = [...prevFiles]
+          
+          response.files.forEach(newFile => {
+            const existingIndex = updatedFiles.findIndex(f => f.filename === newFile.filename)
+            
+            if (existingIndex !== -1) {
+              // Update existing file
+              updatedFiles[existingIndex] = newFile
+            } else {
+              // Add new file
+              updatedFiles.push(newFile)
+            }
+          })
+          
+          return updatedFiles
+        })
+        
+        // Update selected file if it was modified, otherwise keep current selection
+        if (selectedFile) {
+          const updatedSelectedFile = response.files.find(f => f.filename === selectedFile.filename)
+          if (updatedSelectedFile) {
+            setSelectedFile(updatedSelectedFile)
+          }
+        } else if (response.files.length > 0) {
+          // If no file selected, select first new file
+          setSelectedFile(response.files[0])
+        }
+        
+        toast.success(`Updated ${response.filesCount} file(s)`)
       }
     } catch (error) {
       console.error("Error sending message:", error)
