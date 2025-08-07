@@ -4,6 +4,7 @@ dotenv.config();
 import authRoutes from "./routes/auth.route";
 import demoRoutes from "./routes/demo.route";
 import uploadS3 from "./routes/project.route";
+import chat from "./routes/chat.route"
 import cors from "cors";
 
 
@@ -23,4 +24,5 @@ app.get("/api/test", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/demo", demoRoutes);
 app.use("/api/project", uploadS3);
+app.use("/api/model", chat);
 export default app;
