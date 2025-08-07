@@ -19,7 +19,7 @@ type MessageRequest = { message: string };
 class ChatClient {
   private client: any;
 
-  constructor(host: string = 'rnpaf-34-81-230-112.a.free.pinggy.link:38639') {
+  constructor(host: string = 'rnsvd-34-16-199-107.a.free.pinggy.link:34513') {
     this.client = new chatProto.chat.ChatService(
       host,
       grpc.credentials.createInsecure()
